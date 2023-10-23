@@ -23,8 +23,6 @@ class MotionManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var deviceMotion: CMDeviceMotion?
     @Published var heading: CLHeading?
     
-    @Published var temp: CMAmbientPressureData?
-    
     // Motion on / off
     @Published var isAccelerometerOn: Bool = false
     @Published var isLocationOn: Bool = false

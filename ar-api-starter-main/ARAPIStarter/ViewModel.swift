@@ -12,7 +12,6 @@ import Combine
 @MainActor
 class ViewModel: ObservableObject {
     @Published var sliderValue: Float = 0.5
-    @Published var totalSpawn: Int = 20
     
     // For handling different button presses.
     enum UISignal {

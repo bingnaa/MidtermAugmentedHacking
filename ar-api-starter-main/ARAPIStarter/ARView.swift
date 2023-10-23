@@ -87,7 +87,7 @@ class SimpleARView: ARView {
         case .reset:
             resetScene()
         case .spawnParasite:
-            spawnObjectNearCamera()
+            instantiateParasitesPool(count: 20)
         }
     }
 
@@ -116,42 +116,87 @@ class SimpleARView: ARView {
     }
     
     // Function to spawn an object close to the AR camera.
-        func spawnObjectNearCamera() {
-            if var cameraTransform = arView.session.currentFrame?.camera.transform {
-                print("spawn")
+//    func spawnObjectNearCamera() {
+//        if var cameraTransform = arView.session.currentFrame?.camera.transform {
+//            print("spawn")
+//            // Create a translation matrix to represent the desired forward distance (e.g., 1 meter).
+//            let forwardDistance: Float = 0.01 // You can adjust this value as needed.
+//            let translationMatrix = simd_float4x4(float4([1, 0, 0, 0]),
+//                                                float4([0, 1, 0, 0]),
+//                                                float4([0, 0, 1, forwardDistance]),
+//                                                float4([0, 0, 0, 1]))
+//                
+//            // Multiply the camera transform by the translation matrix to move the camera forward.
+//            cameraTransform = simd_mul(cameraTransform, translationMatrix)
+//            
+//            // Extract the position from the updated camera transform.
+//            let position = simd_make_float3(cameraTransform.columns.3)
+//                
+//            // Now, 'position' represents the point 1 meter in front of the camera.
+//                
+//            // Create and add your AR object at this position.
+//            // Create a mesh for the ModelEntity (e.g., a sphere)
+//            let mesh = MeshResource.generateSphere(radius: 0.1)
+//
+//            // Create a material for the ModelEntity (e.g., a red color)
+//            let material = SimpleMaterial(color: .red, isMetallic: false)
+//
+//            // Create the ModelEntity
+//            let mEntity = ModelEntity(mesh: mesh, materials: [material])
+//                
+//            let arObject = Parasites(modelEntity: mEntity, active: true, cameraView: self)
+//            //let arObject = SphereEntity(name: "sphere", radius: 0.1, imageName: "checker.png")
+//            arObject.position = position
+//                
+//            // Add the object to the AR scene.
+//            let objectAnchor = AnchorEntity(world: position)
+//            objectAnchor.addChild(arObject)
+//            arView.scene.addAnchor(objectAnchor)
+//        }
+//    }
+    
+    func instantiateParasitesPool(count: Int) {
+        if let cameraTransform = arView.session.currentFrame?.camera.transform {
+            // Create a mesh for the ModelEntity (e.g., a sphere)
+            let mesh = MeshResource.generateSphere(radius: 0.01)
+
+            // Create a material for the ModelEntity (e.g., a red color)
+            let material = SimpleMaterial(color: .red, isMetallic: false)
+
+            for _ in 0..<count {
                 // Create a translation matrix to represent the desired forward distance (e.g., 1 meter).
                 let forwardDistance: Float = 0.01 // You can adjust this value as needed.
                 let translationMatrix = simd_float4x4(float4([1, 0, 0, 0]),
                                                        float4([0, 1, 0, 0]),
                                                        float4([0, 0, 1, forwardDistance]),
                                                        float4([0, 0, 0, 1]))
-                
+
                 // Multiply the camera transform by the translation matrix to move the camera forward.
-                cameraTransform = simd_mul(cameraTransform, translationMatrix)
-                
+                let transformedCamera = simd_mul(cameraTransform, translationMatrix)
+
                 // Extract the position from the updated camera transform.
-                let position = simd_make_float3(cameraTransform.columns.3)
-                
-                // Now, 'position' represents the point 1 meter in front of the camera.
-                
-                // Create and add your AR object at this position.
-                // Create a mesh for the ModelEntity (e.g., a sphere)
-                let mesh = MeshResource.generateSphere(radius: 0.1)
+                let position = simd_make_float3(transformedCamera.columns.3)
 
-                // Create a material for the ModelEntity (e.g., a red color)
-                let material = SimpleMaterial(color: .red, isMetallic: false)
+                // Create a new Parasite entity
+                let meshEntity = ModelEntity(mesh: mesh, materials: [material])
+                let newParasite = Parasites(modelEntity: meshEntity, active: true, cameraView: arView)
+                newParasite.position = position
 
-                // Create the ModelEntity
-                let mEntity = ModelEntity(mesh: mesh, materials: [material])
-                
-                let arObject = Parasites(modelEntity: mEntity, active: true, cameraView: self)
-                //let arObject = SphereEntity(name: "sphere", radius: 0.1, imageName: "checker.png")
-                arObject.position = position
-                
-                // Add the object to the AR scene.
-                let objectAnchor = AnchorEntity(world: position)
-                objectAnchor.addChild(arObject)
-                arView.scene.addAnchor(objectAnchor)
+                // Add the Parasite entity to the AR scene
+                let parasiteAnchor = AnchorEntity(world: transformedCamera)
+                parasiteAnchor.addChild(newParasite)
+                arView.scene.addAnchor(parasiteAnchor)
             }
         }
+    }
+
+    func getAvailableParasite() -> Parasites? {
+        for entity in scene.anchors.compactMap({ $0 as? Parasites }) {
+            if !entity.active {
+                entity.active = true
+                return entity
+            }
+        }
+        return nil
+    }
 }
